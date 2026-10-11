@@ -98,6 +98,12 @@
         "seasons": [2]
       },
       {
+        "id": "village_store",
+        "title": "储物坑",
+        "text": "屋边挖着几个抹了泥的深坑，装满橡子和麦粒，上面盖着石板。这些吃的够整个聚落过冬。",
+        "seasons": [2, 3]
+      },
+      {
         "id": "village_bones",
         "title": "骨堆",
         "species": "leap_gazelle",

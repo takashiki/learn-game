@@ -5,6 +5,7 @@ extends Control
 const MapView := preload("res://scripts/map_view.gd")
 const PANEL_WIDTH := 440
 const SCROLL_STEP := 60
+const DIALOGUE_HEIGHT := 200
 
 var _map: Control
 var _status: Label
@@ -15,6 +16,13 @@ var _message: Label
 var _journal: PanelContainer
 var _journal_scroll: ScrollContainer
 var _journal_text: RichTextLabel
+var _dialogue: PanelContainer
+var _speaker: Label
+var _line: Label
+var _lines: Array = []
+var _line_index := 0
+## 对话结束后显示在右侧的文字。
+var _after_dialogue := ""
 
 
 func _ready() -> void:
@@ -24,7 +32,13 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("journal"):
+	if _dialogue.visible:
+		# 对话进行中，只接受“确认”来翻页。
+		if event.is_action_pressed("ui_accept"):
+			_advance_dialogue()
+		if not event is InputEventMouse:
+			get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("journal"):
 		_toggle_journal()
 		get_viewport().set_input_as_handled()
 	elif _journal.visible:
@@ -76,9 +90,28 @@ func _build_ui() -> void:
 	_message.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.add_child(_message)
 	var hint := Label.new()
-	hint.text = "方向键/摇杆 选择　A/回车 确认　Y/J 手记"
+	hint.text = "方向键/摇杆 选择　A/回车 确认、翻页　Y/J 手记"
 	hint.modulate.a = 0.6
 	panel.add_child(hint)
+
+	_dialogue = PanelContainer.new()
+	_dialogue.custom_minimum_size.y = DIALOGUE_HEIGHT
+	_dialogue.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE, Control.PRESET_MODE_MINSIZE)
+	_dialogue.visible = false
+	add_child(_dialogue)
+	var dialogue_margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		dialogue_margin.add_theme_constant_override("margin_" + side, 28)
+	_dialogue.add_child(dialogue_margin)
+	var dialogue_box := VBoxContainer.new()
+	dialogue_box.add_theme_constant_override("separation", 10)
+	dialogue_margin.add_child(dialogue_box)
+	_speaker = Label.new()
+	_speaker.add_theme_color_override("font_color", Color(0.95, 0.75, 0.45))
+	dialogue_box.add_child(_speaker)
+	_line = _wrapped_label()
+	_line.add_theme_font_size_override("font_size", 22)
+	dialogue_box.add_child(_line)
 
 	_journal = PanelContainer.new()
 	_journal.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -127,6 +160,15 @@ func _refresh() -> void:
 	else:
 		for observation in GameState.available_observations():
 			_add_action("观察：" + observation["title"], _observe.bind(observation))
+		for npc in GameState.npcs_here():
+			var label: String = npc["name"] if npc["id"] in GameState.met else npc["stranger"]
+			var dialogue := GameState.next_dialogue(npc)
+			if dialogue.is_empty():
+				# 没有新话可说时只是打个招呼，不花时间。
+				if npc["id"] in GameState.met:
+					_add_action("招呼：" + label, _greet.bind(npc))
+			else:
+				_add_action("交谈：" + label, _talk.bind(npc, dialogue))
 		for link in location["links"]:
 			var button := _add_action("前往 " + Data.locations[link]["name"], _travel.bind(link))
 			button.focus_entered.connect(func() -> void: _map.target_id = link)
@@ -135,7 +177,12 @@ func _refresh() -> void:
 			_add_action("整理笔记", _compile_notes)
 			_add_action("结束这一季", _end_season)
 
-	if not _journal.visible and _actions.get_child_count() > 0:
+	if not _journal.visible and not _dialogue.visible:
+		_focus_actions()
+
+
+func _focus_actions() -> void:
+	if _actions.get_child_count() > 0:
 		_actions.get_child(0).grab_focus()
 
 
@@ -156,6 +203,44 @@ func _travel(id: String) -> void:
 func _observe(observation: Dictionary) -> void:
 	_message.text = observation["text"]
 	GameState.observe(observation["id"])
+
+
+func _greet(npc: Dictionary) -> void:
+	_message.text = npc["idle"]
+
+
+func _talk(npc: Dictionary, dialogue: Dictionary) -> void:
+	_message.text = ""
+	_after_dialogue = ""
+	if dialogue.has("teaches"):
+		_after_dialogue = "【记下】%s\n%s" % [dialogue["teaches"]["title"], dialogue["teaches"]["text"]]
+	_lines = dialogue["lines"]
+	_line_index = 0
+	_dialogue.visible = true
+	_release_focus()
+	_show_line()
+	GameState.talk(npc, dialogue)
+
+
+func _show_line() -> void:
+	_speaker.text = _lines[_line_index]["who"]
+	_line.text = _lines[_line_index]["text"]
+
+
+func _advance_dialogue() -> void:
+	_line_index += 1
+	if _line_index < _lines.size():
+		_show_line()
+		return
+	_dialogue.visible = false
+	_message.text = _after_dialogue
+	_focus_actions()
+
+
+func _release_focus() -> void:
+	var focused := get_viewport().gui_get_focus_owner()
+	if focused:
+		focused.release_focus()
 
 
 func _compile_notes() -> void:
@@ -183,11 +268,9 @@ func _toggle_journal() -> void:
 	if _journal.visible:
 		_journal_text.text = _journal_bbcode()
 		_journal_scroll.scroll_vertical = 0
-		var focused := get_viewport().gui_get_focus_owner()
-		if focused:
-			focused.release_focus()
-	elif _actions.get_child_count() > 0:
-		_actions.get_child(0).grab_focus()
+		_release_focus()
+	else:
+		_focus_actions()
 
 
 func _journal_bbcode() -> String:
@@ -201,6 +284,13 @@ func _journal_bbcode() -> String:
 				discovery["text"],
 				discovery["real_basis"],
 			]
+
+	text += "\n[b]人物[/b]\n"
+	if GameState.met.is_empty():
+		text += "（还没有）\n"
+	for npc in Data.npcs.values():
+		if npc["id"] in GameState.met:
+			text += "　· [b]%s[/b]　%s\n" % [npc["name"], npc["summary"]]
 
 	text += "\n[b]物种[/b]\n"
 	var any_species := false

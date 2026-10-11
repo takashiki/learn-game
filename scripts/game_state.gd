@@ -12,6 +12,10 @@ var time_left := TIME_PER_SEASON
 var location_id := BASE_ID
 var observed: Array[String] = []
 var discovered: Array[String] = []
+## 已经发生过的对话 id。
+var talked: Array[String] = []
+## 已经认识的人物 id。
+var met: Array[String] = []
 var finished := false
 
 
@@ -37,6 +41,42 @@ func available_observations() -> Array:
 
 func observe(observation_id: String) -> void:
 	observed.append(observation_id)
+	time_left -= 1
+	changed.emit()
+
+
+## 这一季出现在当前地点的人物。
+func npcs_here() -> Array:
+	var result: Array = []
+	for npc in Data.npcs.values():
+		if npc["schedule"][season] == location_id:
+			result.append(npc)
+	return result
+
+
+## 这个人物现在能说的下一段对话；没有新话可说时返回空字典。
+func next_dialogue(npc: Dictionary) -> Dictionary:
+	for dialogue in npc["dialogues"]:
+		if dialogue["id"] in talked:
+			continue
+		if dialogue.has("seasons") and not float(season) in dialogue["seasons"]:
+			continue
+		var ready := true
+		for required in dialogue.get("requires", []):
+			if not (required in observed or required in discovered or required in talked):
+				ready = false
+				break
+		if ready:
+			return dialogue
+	return {}
+
+
+func talk(npc: Dictionary, dialogue: Dictionary) -> void:
+	talked.append(dialogue["id"])
+	if not npc["id"] in met:
+		met.append(npc["id"])
+	if dialogue.has("teaches"):
+		observed.append(dialogue["teaches"]["id"])
 	time_left -= 1
 	changed.emit()
 

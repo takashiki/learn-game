@@ -4,7 +4,8 @@ extends Node
 var locations: Dictionary = {}
 var species: Dictionary = {}
 var discoveries: Array = []
-## 观察 id -> 观察条目，方便图鉴按 id 查找。
+var npcs: Dictionary = {}
+## 观察 id -> 观察条目，方便图鉴按 id 查找。对话里听来的见闻也登记在这里。
 var observations: Dictionary = {}
 
 
@@ -16,6 +17,11 @@ func _ready() -> void:
 	for entry in _load_json("res://data/species.json"):
 		species[entry["id"]] = entry
 	discoveries = _load_json("res://data/discoveries.json")
+	for npc in _load_json("res://data/npcs.json"):
+		npcs[npc["id"]] = npc
+		for dialogue in npc["dialogues"]:
+			if dialogue.has("teaches"):
+				observations[dialogue["teaches"]["id"]] = dialogue["teaches"]
 	_validate()
 
 
@@ -41,3 +47,20 @@ func _validate() -> void:
 		for required in discovery["requires"]:
 			if not observations.has(required):
 				push_error("发现 %s 需要不存在的观察 %s" % [discovery["id"], required])
+	# 对话的前置条件可以是观察、发现或另一段对话。
+	var known_ids: Array = observations.keys()
+	for discovery in discoveries:
+		known_ids.append(discovery["id"])
+	for npc in npcs.values():
+		for dialogue in npc["dialogues"]:
+			known_ids.append(dialogue["id"])
+	for npc in npcs.values():
+		if npc["schedule"].size() != 4:
+			push_error("人物 %s 的 schedule 必须正好有四季" % npc["id"])
+		for place in npc["schedule"]:
+			if place != null and not locations.has(place):
+				push_error("人物 %s 出现在不存在的地点 %s" % [npc["id"], place])
+		for dialogue in npc["dialogues"]:
+			for required in dialogue.get("requires", []):
+				if not required in known_ids:
+					push_error("对话 %s 需要不存在的条件 %s" % [dialogue["id"], required])
