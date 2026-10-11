@@ -1,0 +1,148 @@
+[
+  {
+    "id": "base",
+    "name": "着陆舱",
+    "desc": "半埋在山脊背风处的着陆舱。从这里能俯瞰整条河谷。",
+    "pos": [0.5, 0.12],
+    "links": ["ford", "flint"],
+    "observations": []
+  },
+  {
+    "id": "flint",
+    "name": "燧石岗",
+    "desc": "裸露的石灰岩里夹着成层的深色石结核，地上散落着被敲碎的石片。",
+    "pos": [0.8, 0.25],
+    "links": ["base", "cliff"],
+    "observations": [
+      {
+        "id": "flint_flakes",
+        "title": "敲石的痕迹",
+        "text": "石结核被人有选择地敲开，薄而锋利的长石片被带走，留下的是废料。",
+        "seasons": [0, 1, 2, 3]
+      }
+    ]
+  },
+  {
+    "id": "cliff",
+    "name": "崖壁",
+    "desc": "陡峭的岩壁，几乎无路可走，却有蹄印一直通到最高处。",
+    "pos": [0.88, 0.55],
+    "links": ["flint", "oak"],
+    "observations": [
+      {
+        "id": "cliff_herd",
+        "title": "跟着头羊走",
+        "species": "rock_goat",
+        "text": "一群岩角羊排成一列通过崖壁。领头的总是同一只，其余的紧跟着它，受惊时也挤成一团而不是四散。",
+        "seasons": [0, 1, 2, 3]
+      }
+    ]
+  },
+  {
+    "id": "ford",
+    "name": "石滩渡口",
+    "desc": "河面在这里变宽变浅，露出一片卵石滩，是过河唯一方便的地方。",
+    "pos": [0.42, 0.38],
+    "links": ["base", "slope", "village", "marsh"],
+    "observations": [
+      {
+        "id": "ford_flood",
+        "title": "春汛",
+        "text": "融雪让河水漫过了石滩，退水后留下一层细腻的淤泥。",
+        "seasons": [0]
+      }
+    ]
+  },
+  {
+    "id": "slope",
+    "name": "南坡草地",
+    "desc": "朝阳的缓坡上长着成片齐腰高的野草，其中一种结着沉甸甸的穗。",
+    "pos": [0.18, 0.3],
+    "links": ["ford", "village"],
+    "observations": [
+      {
+        "id": "slope_green",
+        "title": "越冬的草",
+        "species": "nodding_wheat",
+        "text": "垂穗麦在秋雨后发芽，以幼苗过冬，春天迅速抽穗。它的生长季避开了干热的夏天。",
+        "seasons": [0, 3]
+      },
+      {
+        "id": "slope_shatter",
+        "title": "一碰就散的穗",
+        "species": "nodding_wheat",
+        "text": "成熟的垂穗麦穗轴很脆，手一碰就断成小节，带着籽粒落进土里。站在坡上几乎收不到完整的穗。",
+        "seasons": [1]
+      }
+    ]
+  },
+  {
+    "id": "village",
+    "name": "圆屋聚落",
+    "desc": "十几座半地穴式的圆形石基小屋围着一片空地，屋边有石臼和储物坑。",
+    "pos": [0.25, 0.62],
+    "links": ["ford", "slope", "marsh", "oak"],
+    "observations": [
+      {
+        "id": "village_harvest",
+        "title": "镶石片的镰刀",
+        "species": "nodding_wheat",
+        "text": "人们用嵌着燧石片的弯柄镰刀成把割下麦秆带回聚落。已经散落的籽粒留在了坡上，带回来的都是还留在秆上的穗。",
+        "seasons": [1]
+      },
+      {
+        "id": "village_sowing",
+        "title": "屋边的麦丛",
+        "species": "nodding_wheat",
+        "text": "秋雨前，有人把储物坑里剩下的麦粒撒在聚落旁翻松的淤泥地里。",
+        "seasons": [2]
+      },
+      {
+        "id": "village_bones",
+        "title": "骨堆",
+        "species": "leap_gazelle",
+        "text": "聚落边的垃圾堆里，兽骨绝大多数来自跃羚，而且各种年龄的都有，都是猎来的。",
+        "seasons": [0, 1, 2, 3]
+      },
+      {
+        "id": "village_dog",
+        "title": "屋边的狗",
+        "species": "camp_dog",
+        "text": "几只狗在屋间走动，吃人丢下的骨头，陌生人靠近时吠叫。它们已经和人一起生活了很久。",
+        "seasons": [0, 1, 2, 3]
+      }
+    ]
+  },
+  {
+    "id": "marsh",
+    "name": "苇泽",
+    "desc": "河水在低处漫开成一片芦苇沼泽，边缘是开阔的草滩。",
+    "pos": [0.5, 0.78],
+    "links": ["ford", "village", "oak"],
+    "observations": [
+      {
+        "id": "marsh_gazelle",
+        "title": "炸开的羚群",
+        "species": "leap_gazelle",
+        "text": "草滩上的跃羚一察觉动静就全速逃开，各自朝不同方向高高跃起。雄羚各守一块地盘，互相驱赶。",
+        "seasons": [0, 1, 2]
+      }
+    ]
+  },
+  {
+    "id": "oak",
+    "name": "橡林",
+    "desc": "稀疏的橡树和脂果树散布在坡上，树下是低矮的灌丛。",
+    "pos": [0.7, 0.72],
+    "links": ["village", "marsh", "cliff"],
+    "observations": [
+      {
+        "id": "oak_nuts",
+        "title": "秋天的坚果",
+        "species": "resin_nut",
+        "text": "橡子和脂果同时成熟。聚落的人整筐地背回去，橡子要捣碎、反复浸水去掉涩味才能吃。",
+        "seasons": [2]
+      }
+    ]
+  }
+]
